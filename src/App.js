@@ -39,28 +39,37 @@ function App() {
       vaccinationEntries
     };
 
-    try {
-      const response = await fetch('https://your-server-endpoint.com/api/vaccination-records', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      });
+    console.log('Store content:', {
+      firstName,
+      lastName,
+      birthdate,
+      vaccinationEntries,
+      formStatus
+    });
 
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
+    // try {
+    //   const response = await fetch('https://your-server-endpoint.com/api/vaccination-records', {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json'
+    //     },
+    //     body: JSON.stringify(formData)
+    //   });
 
-      const result = await response.json();
-      console.log('Form submitted successfully:', result);
-      setFormStatus({ success: true, error: false });
-      resetForm();
-    } catch (error) {
-      console.error('There was a problem with the form submission:', error);
-      setFormStatus({ success: false, error: true });
-    }
+    //   if (!response.ok) {
+    //     throw new Error('Network response was not ok');
+    //   }
+
+    //   const result = await response.json();
+    //   console.log('Form submitted successfully:', result);
+    //   setFormStatus({ success: true, error: false });
+    //   resetForm();
+    // } catch (error) {
+    //   console.error('There was a problem with the form submission:', error);
+    //   setFormStatus({ success: false, error: true });
+    // }
   };
+
 
   return (
     <Box maxW="md" mx="auto" mt={10} p={5} borderWidth="1px" borderRadius="lg">
@@ -134,3 +143,4 @@ function App() {
 }
 
 export default App;
+
