@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
   Button,
@@ -12,29 +12,30 @@ import {
   AlertIcon
 } from '@chakra-ui/react';
 import VaccinationEntryForm from './components/VaccinationEntryForm';
+import useStore from './store';
 
 function App() {
-  const [vaccinationEntries, setVaccinationEntries] = useState([]);
-  const [formStatus, setFormStatus] = useState({ success: false, error: false });
-
-  const addVaccinationEntry = () => {
-    setVaccinationEntries([...vaccinationEntries, { id: Date.now(), name: '', date: '' }]);
-  };
-
-  const handleVaccinationEntryChange = (id, field, value) => {
-    setVaccinationEntries((prevEntries) =>
-      prevEntries.map((entry) =>
-        entry.id === id ? { ...entry, [field]: value } : entry
-      )
-    );
-  };
+  const {
+    firstName,
+    lastName,
+    birthdate,
+    vaccinationEntries,
+    formStatus,
+    setFirstName,
+    setLastName,
+    setBirthdate,
+    addVaccinationEntry,
+    updateVaccinationEntry,
+    setFormStatus,
+    resetForm
+  } = useStore();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     const formData = {
-      firstName: event.target['first-name'].value,
-      lastName: event.target['last-name'].value,
-      birthdate: event.target['birthdate'].value,
+      firstName,
+      lastName,
+      birthdate,
       vaccinationEntries
     };
 
@@ -54,9 +55,7 @@ function App() {
       const result = await response.json();
       console.log('Form submitted successfully:', result);
       setFormStatus({ success: true, error: false });
-      // Clear the form
-      event.target.reset();
-      setVaccinationEntries([]);
+      resetForm();
     } catch (error) {
       console.error('There was a problem with the form submission:', error);
       setFormStatus({ success: false, error: true });
@@ -84,17 +83,29 @@ function App() {
         <Stack spacing={4}>
           <FormControl id="first-name" isRequired>
             <FormLabel>Prénom</FormLabel>
-            <Input placeholder="Votre prénom" />
+            <Input
+              placeholder="Votre prénom"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+            />
           </FormControl>
 
           <FormControl id="last-name" isRequired>
             <FormLabel>Nom</FormLabel>
-            <Input placeholder="Votre nom" />
+            <Input
+              placeholder="Votre nom"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+            />
           </FormControl>
 
           <FormControl id="birthdate" isRequired>
             <FormLabel>Date de naissance</FormLabel>
-            <Input type="date" />
+            <Input
+              type="date"
+              value={birthdate}
+              onChange={(e) => setBirthdate(e.target.value)}
+            />
           </FormControl>
 
           <VStack spacing={4} align="stretch">
@@ -104,7 +115,7 @@ function App() {
                 id={entry.id}
                 name={entry.name}
                 date={entry.date}
-                onChange={handleVaccinationEntryChange}
+                onChange={updateVaccinationEntry}
               />
             ))}
           </VStack>
