@@ -1,4 +1,5 @@
-import React from 'react';
+import { Nuva } from '@syadem/nuva';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -7,12 +8,23 @@ import {
   Input,
   Stack,
   Heading,
-  VStack,
-  Alert,
-  AlertIcon
+  useDisclosure,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  ModalFooter,
+  Divider,
+  AbsoluteCenter
 } from '@chakra-ui/react';
-import VaccinationEntryForm from './components/VaccinationEntryForm';
+import { VaccinationEntryForm } from './components/VaccinationEntryForm';
 import useStore from './store';
+import { VaccinationList } from './components/VaccinationList';
+import { sendRpcRequest } from './rpcClient';
+import * as pdfjsLib from 'pdfjs-dist/webpack';
+import { QrReader } from 'react-qr-reader';
 
 function App() {
   const {
@@ -20,124 +32,221 @@ function App() {
     lastName,
     birthdate,
     vaccinationEntries,
-    formStatus,
     setFirstName,
     setLastName,
     setBirthdate,
     addVaccinationEntry,
-    updateVaccinationEntry,
-    setFormStatus,
-    resetForm
   } = useStore();
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    const formData = {
-      firstName,
-      lastName,
-      birthdate,
-      vaccinationEntries
-    };
+  const { isOpen, onOpen, onClose } = useDisclosure()
+  const qrCodeDisclosure = useDisclosure()
+  const [nuvaId, setNuvaId] = useState(null);
+  const [date, setDate] = useState(null);
+  const [nuva, setNuva] = useState(null);
 
+  useEffect(() => {
+    (async () => {
+      const nuva = await Nuva.load();
+      setNuva(nuva);
+    })();
+  }, []);
+
+  const getPDF = async (event) => {
+    event.preventDefault();
     console.log('Store content:', {
       firstName,
       lastName,
       birthdate,
-      vaccinationEntries,
-      formStatus
+      vaccinationEntries
     });
 
-    // try {
-    //   const response = await fetch('https://your-server-endpoint.com/api/vaccination-records', {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json'
-    //     },
-    //     body: JSON.stringify(formData)
-    //   });
+    const bod = new Date(birthdate)
+    const cve = {
+      "ver": "1.0.0",
+      "nam": {
+        "fnt": firstName,
+        "gnt": lastName
+      },
+      "dob": birthdate,
+      "v": vaccinationEntries.map(entry => ({
+        "o": "SYA",
+        "i": Math.floor(Math.random() * 10000),
+        "a": (new Date(entry.date) - bod) / (1000 * 3600 * 24),
+        "mp": entry.nuvaId
+      }))
+    };
+    console.log('cve:', JSON.stringify(cve));
+    const response = await sendRpcRequest('to_hcert_pdf', { hcert_data: cve });
 
-    //   if (!response.ok) {
-    //     throw new Error('Network response was not ok');
-    //   }
+    const binaryString = window.atob(response.result)
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = "evc.pdf";
+    document.body.appendChild(link);
+    link.click();
 
-    //   const result = await response.json();
-    //   console.log('Form submitted successfully:', result);
-    //   setFormStatus({ success: true, error: false });
-    //   resetForm();
-    // } catch (error) {
-    //   console.error('There was a problem with the form submission:', error);
-    //   setFormStatus({ success: false, error: true });
-    // }
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
+  const handleAddVaccinationAct = () => {
+    addVaccinationEntry(parseInt(nuvaId), date)
+    setNuvaId(null)
+    setDate(null)
+    onClose()
+  }
+
+  const hcertToStore = async (hcert) => {
+    const response = await sendRpcRequest('from_hcert', { hcert });
+    if (response.result.verified) {
+      setFirstName(response.result.payload.nam.fnt);
+      setLastName(response.result.payload.nam.gnt);
+      setBirthdate(response.result.payload.dob);
+      const dob = new Date(response.result.payload.dob)
+      console.log('dob:', dob);
+      response.result.payload.v.forEach(v => {
+        const vaccineDate = new Date(dob);
+        vaccineDate.setDate(vaccineDate.getDate() + v.a);
+        addVaccinationEntry(v.mp, vaccineDate.toISOString().split('T')[0]);
+      });
+    }
+  }
+
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const fileReader = new FileReader();
+      fileReader.onload = async function () {
+        const typedArray = new Uint8Array(this.result);
+        const pdf = await pdfjsLib.getDocument(typedArray).promise;
+        const info = await pdf.getMetadata();
+        const hcert = JSON.parse(info.info.Custom.data).hcert
+        hcertToStore(hcert);
+      }
+      fileReader.readAsArrayBuffer(file);
+    }
+  };
+
+  const handleQrCode = async (data) => {
+    if (data) {
+      hcertToStore(data.text);
+    }
+  }
+  const [data, setData] = useState();
 
   return (
     <Box maxW="md" mx="auto" mt={10} p={5} borderWidth="1px" borderRadius="lg">
       <Heading mb={6} textAlign="center">
-        Carnet de Vaccination
+        EVC demo
       </Heading>
-      {formStatus.success && (
-        <Alert status="success" mb={4}>
-          <AlertIcon />
-          Form submitted successfully!
-        </Alert>
-      )}
-      {formStatus.error && (
-        <Alert status="error" mb={4}>
-          <AlertIcon />
-          There was a problem with the form submission.
-        </Alert>
-      )}
-      <form onSubmit={handleSubmit}>
-        <Stack spacing={4}>
-          <FormControl id="first-name" isRequired>
-            <FormLabel>Prénom</FormLabel>
-            <Input
-              placeholder="Votre prénom"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
+      <Box position='relative' padding='10'>
+        <Divider />
+        <AbsoluteCenter bg='white' px='4'>
+          Verify
+        </AbsoluteCenter>
+      </Box>
+      <Button colorScheme="blue" onClick={qrCodeDisclosure.onOpen} width="full">
+        Read QrCode
+      </Button>
+      <Input placeholder='Pdf' size='md' type='file' onChange={handleFileChange} />
+      <Divider />
+      <Box position='relative' padding='10'>
+        <Divider />
+        <AbsoluteCenter bg='white' px='4'>
+          Identity
+        </AbsoluteCenter>
+      </Box>
+      <Stack spacing={2}>
+        <FormControl id="first-name" isRequired>
+          <FormLabel>First Name</FormLabel>
+          <Input
+            placeholder="Your first name"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            size='sm'
+          />
+        </FormControl>
+        <FormControl id="last-name" isRequired>
+          <FormLabel>Last Name</FormLabel>
+          <Input
+            placeholder="Your nom"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            size='sm'
+          />
+        </FormControl>
+        <FormControl id="birthdate" isRequired>
+          <FormLabel>Birthdate</FormLabel>
+          <Input
+            type="date"
+            value={birthdate}
+            onChange={(e) => setBirthdate(e.target.value)}
+            size='sm'
+          />
+        </FormControl>
+
+        <Button colorScheme="blue" type="submit" width="full" onClick={getPDF}>
+          Get the Vaccination Card
+        </Button>
+      </Stack>
+
+
+      <Box position='relative' padding='10'>
+        <Divider />
+        <AbsoluteCenter bg='white' px='4'>
+          Vaccinations
+        </AbsoluteCenter>
+      </Box>
+
+      <VaccinationList entries={vaccinationEntries} nuva={nuva} />
+      <Button colorScheme="blue" onClick={onOpen} width="full">
+        Add a vaccination act
+      </Button>
+
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Modal Title</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <VaccinationEntryForm nuva={nuva} setNuvaId={setNuvaId} setDate={setDate} />
+          </ModalBody>
+
+          <ModalFooter>
+            <Button colorScheme='blue' mr={3} onClick={onClose}>
+              Close
+            </Button>
+            <Button variant='blue' onClick={handleAddVaccinationAct}>Add</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={qrCodeDisclosure.isOpen} onClose={qrCodeDisclosure.onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Modal Title</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <QrReader
+              onResult={handleQrCode}
+              style={{ width: '100%' }}
             />
-          </FormControl>
+          </ModalBody>
 
-          <FormControl id="last-name" isRequired>
-            <FormLabel>Nom</FormLabel>
-            <Input
-              placeholder="Votre nom"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-            />
-          </FormControl>
-
-          <FormControl id="birthdate" isRequired>
-            <FormLabel>Date de naissance</FormLabel>
-            <Input
-              type="date"
-              value={birthdate}
-              onChange={(e) => setBirthdate(e.target.value)}
-            />
-          </FormControl>
-
-          <VStack spacing={4} align="stretch">
-            {vaccinationEntries.map((entry) => (
-              <VaccinationEntryForm
-                key={entry.id}
-                id={entry.id}
-                name={entry.name}
-                date={entry.date}
-                onChange={updateVaccinationEntry}
-              />
-            ))}
-          </VStack>
-
-          <Button colorScheme="blue" onClick={addVaccinationEntry} width="full">
-            Ajouter une vaccination
-          </Button>
-
-          <Button colorScheme="blue" type="submit" width="full">
-            Soumettre
-          </Button>
-        </Stack>
-      </form>
+          <ModalFooter>
+            <Button colorScheme='blue' mr={3} onClick={qrCodeDisclosure.onClose}>
+              Close
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 }

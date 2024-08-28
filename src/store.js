@@ -9,18 +9,12 @@ const useStore = create((set) => ({
   setFirstName: (firstName) => set({ firstName }),
   setLastName: (lastName) => set({ lastName }),
   setBirthdate: (birthdate) => set({ birthdate }),
-  addVaccinationEntry: () =>
+  addVaccinationEntry: (nuvaId, date) =>
     set((state) => ({
       vaccinationEntries: [
         ...state.vaccinationEntries,
-        { id: Date.now(), name: '', date: '' }
+        { id: Date.now(), nuvaId, date }
       ]
-    })),
-  updateVaccinationEntry: (id, field, value) =>
-    set((state) => ({
-      vaccinationEntries: state.vaccinationEntries.map((entry) =>
-        entry.id === id ? { ...entry, [field]: value } : entry
-      )
     })),
   setFormStatus: (formStatus) => set({ formStatus }),
   resetForm: () =>

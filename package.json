@@ -7,9 +7,13 @@
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@syadem/nuva": "^0.1.5",
+    "chakra-ui-autocomplete": "^1.4.5",
     "framer-motion": "^11.3.29",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^4.5.136",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-qr-reader": "^3.0.0-beta-1",
     "react-scripts": "5.0.1",
     "zustand": "^4.5.5"
   },
