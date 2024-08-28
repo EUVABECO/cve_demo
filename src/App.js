@@ -30,6 +30,8 @@ import { VaccinationList } from './components/VaccinationList';
 import { sendRpcRequest } from './rpcClient';
 import * as pdfjsLib from 'pdfjs-dist/webpack';
 import { useZxing } from "react-zxing";
+import { FaQrcode } from "react-icons/fa";
+import { FaPlus } from "react-icons/fa";
 
 function App() {
   const {
@@ -198,10 +200,6 @@ function App() {
                   size='sm'
                 />
               </FormControl>
-
-              <Button colorScheme="blue" type="submit" width="full" onClick={getPDF}>
-                Get the Vaccination Card
-              </Button>
             </Stack>
 
 
@@ -211,12 +209,14 @@ function App() {
                 Vaccinations
               </AbsoluteCenter>
             </Box>
-
-            <VaccinationList entries={vaccinationEntries} nuva={nuva} />
-            <Button colorScheme="blue" onClick={onOpen} width="full">
+            <Button colorScheme="blue" onClick={onOpen} width="full" leftIcon={<FaPlus />}>
               Add a vaccination act
             </Button>
+            <VaccinationList entries={vaccinationEntries} nuva={nuva} />
 
+            <Button colorScheme="blue" type="submit" width="full" onClick={getPDF} leftIcon={<FaQrcode />}>
+                Get the Vaccination Card
+              </Button>
             <Modal isOpen={isOpen} onClose={onClose}>
               <ModalOverlay />
               <ModalContent>
