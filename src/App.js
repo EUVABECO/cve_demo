@@ -43,6 +43,7 @@ function App() {
     setLastName,
     setBirthdate,
     addVaccinationEntry,
+    resetForm
   } = useStore();
 
   const { isOpen, onOpen, onClose } = useDisclosure()
@@ -127,6 +128,7 @@ function App() {
   }
 
   const handleFileChange = async (event) => {
+    resetForm();
     const file = event.target.files[0];
     if (file) {
       const fileReader = new FileReader();
@@ -148,6 +150,7 @@ function App() {
   });
 
   const handleQrCode = async (data) => {
+    resetForm();
     if (data) {
       hcertToStore(data.getText());
     }
