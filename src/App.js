@@ -22,7 +22,9 @@ import {
   TabList,
   Tab,
   TabPanels,
-  TabPanel
+  TabPanel,
+  Badge,
+  Text
 } from '@chakra-ui/react';
 import { VaccinationEntryForm } from './components/VaccinationEntryForm';
 import useStore from './store';
@@ -30,8 +32,7 @@ import { VaccinationList } from './components/VaccinationList';
 import { sendRpcRequest } from './rpcClient';
 import * as pdfjsLib from 'pdfjs-dist/webpack';
 import { useZxing } from "react-zxing";
-import { FaQrcode } from "react-icons/fa";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaQrcode } from "react-icons/fa";
 
 function App() {
   const {
@@ -218,8 +219,8 @@ function App() {
             <VaccinationList entries={vaccinationEntries} nuva={nuva} />
 
             <Button colorScheme="blue" type="submit" width="full" onClick={getPDF} leftIcon={<FaQrcode />}>
-                Get the Vaccination Card
-              </Button>
+              Get the Vaccination Card
+            </Button>
             <Modal isOpen={isOpen} onClose={onClose}>
               <ModalOverlay />
               <ModalContent>
@@ -241,7 +242,7 @@ function App() {
 
           </TabPanel>
           <TabPanel>
-          <Box position='relative' padding='10'>
+            <Box position='relative' padding='10'>
               <Divider />
               <AbsoluteCenter bg='white' px='4'>
                 Verify QrCode
@@ -261,10 +262,13 @@ function App() {
                 Result
               </AbsoluteCenter>
             </Box>
-            First Name: {firstName} <br />
-            Last Name: {lastName} <br />
-            Birthdate: {birthdate} <br />
-            Vaccinations: <br />
+            <Text as={'b'}>First Name:</Text> {firstName} <br />
+            <Text as={'b'}>Last Name:</Text> {lastName} <br />
+            <Text as={'b'}>Birthdate:</Text> {birthdate} <br />
+            <Text as={'b'}>Signature:</Text>  <Badge variant='outline' colorScheme='green'>
+              Verified
+            </Badge><br />
+            <Text as={'b'}>Vaccinations:</Text>
             <VaccinationList entries={vaccinationEntries} nuva={nuva} />
           </TabPanel>
         </TabPanels>
