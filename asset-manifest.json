@@ -1,12 +1,12 @@
 {
   "files": {
-    "main.js": "/cve_demo/static/js/main.0410d9f6.js",
+    "main.js": "/cve_demo/static/js/main.1226db51.js",
     "static/js/581.b80fa3e4.chunk.js": "/cve_demo/static/js/581.b80fa3e4.chunk.js",
     "index.html": "/cve_demo/index.html",
-    "main.0410d9f6.js.map": "/cve_demo/static/js/main.0410d9f6.js.map",
+    "main.1226db51.js.map": "/cve_demo/static/js/main.1226db51.js.map",
     "581.b80fa3e4.chunk.js.map": "/cve_demo/static/js/581.b80fa3e4.chunk.js.map"
   },
   "entrypoints": [
-    "static/js/main.0410d9f6.js"
+    "static/js/main.1226db51.js"
   ]
 }
