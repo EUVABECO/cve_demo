@@ -17,14 +17,19 @@ import {
   ModalBody,
   ModalFooter,
   Divider,
-  AbsoluteCenter
+  AbsoluteCenter,
+  Tabs,
+  TabList,
+  Tab,
+  TabPanels,
+  TabPanel
 } from '@chakra-ui/react';
 import { VaccinationEntryForm } from './components/VaccinationEntryForm';
 import useStore from './store';
 import { VaccinationList } from './components/VaccinationList';
 import { sendRpcRequest } from './rpcClient';
 import * as pdfjsLib from 'pdfjs-dist/webpack';
-import { QrReader } from 'react-qr-reader';
+import { useZxing } from "react-zxing";
 
 function App() {
   const {
@@ -134,119 +139,133 @@ function App() {
     }
   };
 
+  const { ref } = useZxing({
+    onDecodeResult(result) {
+      handleQrCode(result);
+    },
+  });
+
   const handleQrCode = async (data) => {
     if (data) {
-      hcertToStore(data.text);
+      hcertToStore(data.getText());
     }
   }
-  const [data, setData] = useState();
 
   return (
     <Box maxW="md" mx="auto" mt={10} p={5} borderWidth="1px" borderRadius="lg">
       <Heading mb={6} textAlign="center">
         EVC demo
       </Heading>
-      <Box position='relative' padding='10'>
-        <Divider />
-        <AbsoluteCenter bg='white' px='4'>
-          Verify
-        </AbsoluteCenter>
-      </Box>
-      <Button colorScheme="blue" onClick={qrCodeDisclosure.onOpen} width="full">
-        Read QrCode
-      </Button>
-      <Input placeholder='Pdf' size='md' type='file' onChange={handleFileChange} />
-      <Divider />
-      <Box position='relative' padding='10'>
-        <Divider />
-        <AbsoluteCenter bg='white' px='4'>
-          Identity
-        </AbsoluteCenter>
-      </Box>
-      <Stack spacing={2}>
-        <FormControl id="first-name" isRequired>
-          <FormLabel>First Name</FormLabel>
-          <Input
-            placeholder="Your first name"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            size='sm'
-          />
-        </FormControl>
-        <FormControl id="last-name" isRequired>
-          <FormLabel>Last Name</FormLabel>
-          <Input
-            placeholder="Your nom"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            size='sm'
-          />
-        </FormControl>
-        <FormControl id="birthdate" isRequired>
-          <FormLabel>Birthdate</FormLabel>
-          <Input
-            type="date"
-            value={birthdate}
-            onChange={(e) => setBirthdate(e.target.value)}
-            size='sm'
-          />
-        </FormControl>
 
-        <Button colorScheme="blue" type="submit" width="full" onClick={getPDF}>
-          Get the Vaccination Card
-        </Button>
-      </Stack>
+      <Tabs>
+        <TabList>
+          <Tab>Create</Tab>
+          <Tab>Load</Tab>
+        </TabList>
+        <TabPanels>
+          <TabPanel>
+            <Box position='relative' padding='10'>
+              <Divider />
+              <AbsoluteCenter bg='white' px='4'>
+                Identity
+              </AbsoluteCenter>
+            </Box>
+            <Stack spacing={2}>
+              <FormControl id="first-name" isRequired>
+                <FormLabel>First Name</FormLabel>
+                <Input
+                  placeholder="Your first name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  size='sm'
+                />
+              </FormControl>
+              <FormControl id="last-name" isRequired>
+                <FormLabel>Last Name</FormLabel>
+                <Input
+                  placeholder="Your nom"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  size='sm'
+                />
+              </FormControl>
+              <FormControl id="birthdate" isRequired>
+                <FormLabel>Birthdate</FormLabel>
+                <Input
+                  type="date"
+                  value={birthdate}
+                  onChange={(e) => setBirthdate(e.target.value)}
+                  size='sm'
+                />
+              </FormControl>
+
+              <Button colorScheme="blue" type="submit" width="full" onClick={getPDF}>
+                Get the Vaccination Card
+              </Button>
+            </Stack>
 
 
-      <Box position='relative' padding='10'>
-        <Divider />
-        <AbsoluteCenter bg='white' px='4'>
-          Vaccinations
-        </AbsoluteCenter>
-      </Box>
+            <Box position='relative' padding='10'>
+              <Divider />
+              <AbsoluteCenter bg='white' px='4'>
+                Vaccinations
+              </AbsoluteCenter>
+            </Box>
 
-      <VaccinationList entries={vaccinationEntries} nuva={nuva} />
-      <Button colorScheme="blue" onClick={onOpen} width="full">
-        Add a vaccination act
-      </Button>
-
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Modal Title</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <VaccinationEntryForm nuva={nuva} setNuvaId={setNuvaId} setDate={setDate} />
-          </ModalBody>
-
-          <ModalFooter>
-            <Button colorScheme='blue' mr={3} onClick={onClose}>
-              Close
+            <VaccinationList entries={vaccinationEntries} nuva={nuva} />
+            <Button colorScheme="blue" onClick={onOpen} width="full">
+              Add a vaccination act
             </Button>
-            <Button variant='blue' onClick={handleAddVaccinationAct}>Add</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
 
-      <Modal isOpen={qrCodeDisclosure.isOpen} onClose={qrCodeDisclosure.onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Modal Title</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <QrReader
-              onResult={handleQrCode}
-              style={{ width: '100%' }}
-            />
-          </ModalBody>
+            <Modal isOpen={isOpen} onClose={onClose}>
+              <ModalOverlay />
+              <ModalContent>
+                <ModalHeader>Modal Title</ModalHeader>
+                <ModalCloseButton />
+                <ModalBody>
+                  <VaccinationEntryForm nuva={nuva} setNuvaId={setNuvaId} setDate={setDate} />
+                </ModalBody>
 
-          <ModalFooter>
-            <Button colorScheme='blue' mr={3} onClick={qrCodeDisclosure.onClose}>
-              Close
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+                <ModalFooter>
+                  <Button colorScheme='blue' mr={3} onClick={onClose}>
+                    Close
+                  </Button>
+                  <Button variant='blue' onClick={handleAddVaccinationAct}>Add</Button>
+                </ModalFooter>
+              </ModalContent>
+            </Modal>
+
+
+          </TabPanel>
+          <TabPanel>
+          <Box position='relative' padding='10'>
+              <Divider />
+              <AbsoluteCenter bg='white' px='4'>
+                Verify QrCode
+              </AbsoluteCenter>
+            </Box>
+            <video ref={ref} />
+            <Box position='relative' padding='10'>
+              <Divider />
+              <AbsoluteCenter bg='white' px='4'>
+                Verify A PDF
+              </AbsoluteCenter>
+            </Box>
+            <Input placeholder='Pdf' size='md' type='file' onChange={handleFileChange} />
+            <Box position='relative' padding='10'>
+              <Divider />
+              <AbsoluteCenter bg='white' px='4'>
+                Result
+              </AbsoluteCenter>
+            </Box>
+            First Name: {firstName} <br />
+            Last Name: {lastName} <br />
+            Birthdate: {birthdate} <br />
+            Vaccinations: <br />
+            <VaccinationList entries={vaccinationEntries} nuva={nuva} />
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
     </Box>
   );
 }
