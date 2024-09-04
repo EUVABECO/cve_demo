@@ -9,7 +9,7 @@ export const VaccinationEntryForm = (props) => {
     <Box p={4} borderWidth="1px" borderRadius="lg">
       <Select variant='outline' placeholder='Vaccine' onChange={(e) => setNuvaId(e.target.value)}>
         {
-          nuva.repositories.vaccines.all().sort().map(vaccine => (
+          nuva.repositories.vaccines.all().map(vaccine => (
             <option value={vaccine.code}>{vaccine.name}</option>
           ))
         }
